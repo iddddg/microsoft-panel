@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Microsoft 面板</title>
+    <link href="https://lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/element-ui/2.15.7/theme-chalk/index.min.css"
+        type="text/css" rel="stylesheet" />
+</head>
+
+<body>
+    <div id="app">
+        <el-table :data="users" border stripe style="width: 100%" align="center">
+            <el-table-column type="index" label="#"></el-table-column>
+            <el-table-column prop="id" label="ID"></el-table-column>
+            <el-table-column prop="displayName" label="名称"></el-table-column>
+            <el-table-column prop="userPrincipalName" label="邮箱"></el-table-column>
+            <el-table-column prop="liences" label="订阅"></el-table-column>
+            <el-table-column label="操作">
+                <template slot-scope="scope">
+                    <el-button @click="handleClick(scope.row)" type="text" size="small">分配角色</el-button>
+                    <el-button @click="handleClick(scope.row)" type="text" size="small">分配许可</el-button>
+                    <el-button @click="handleDeleteUserClick(scope.row.id, scope.$index)" type="text" size="small">删除
+                    </el-button>
+                </template>
+            </el-table-column>
+        </el-table>
+    </div>
+</body>
+<script src="https://lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/vue/2.6.14/vue.min.js"
+    type="application/javascript"></script>
+<script src="https://lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/element-ui/2.15.7/index.min.js"
+    type="application/javascript"></script>
+<script src="https://lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/axios/0.26.0/axios.min.js"
+    type="application/javascript"></script>
+<script>
+    new Vue({
+        el: '#app',
+        data: function () {
+            return {
+                tableParams: {
+                    page: 1,
+                    size: 10,
+                    total: 0
+                },
+                users: [],
+                formData: {
+
+                },
+            }
+        },
+        mounted() {
+            this.init();
+        },
+        methods: {
+            init() {
+                this.getUsers();
+            },
+            getUsers() {
+                axios.get('/api.php', {
+                    'params': {
+                        'method': 'getUsers'
+                    }
+                })
+                    .then(res => {
+                        this.$message.success('获取用户列表完成');
+                        this.users = res.data;
+                        this.tableParams.total = res.data.length;
+                    })
+                    .catch(err => {
+                        this.$message.error('获取用户列表失败，请重试');
+                    });
+            },
+            handleSizeChange(val) {
+                this.tableParams.page = 1;
+                this.tableParams.size = val;
+                this.getUsers();
+            },
+
+            handleCurrentChange(val) {
+                this.tableParams.page = val;
+                this.getUsers();
+            },
+            handleDeleteUserClick(id, index) {
+                this.$confirm('此操作将删除该用户, 是否继续?', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    axios.get('/api.php', {
+                        'params': {
+                            'method': 'deleteUser',
+                            'id': id
+                        }
+                    })
+                        .then(res => {
+                            this.$message.success('删除用户完成');
+                            this.users.splice(index, 1);
+                        })
+                        .catch(err => {
+                            this.$message.error('删除用户失败，请重试');
+                        });
+                }).catch(() => {
+
+                });
+            }
+        }
+    })
+</script>
+
+</html>
